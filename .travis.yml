@@ -13,6 +13,8 @@ matrix:
       env:
         - DEPS=lowest
     - php: 7.1
+      env:
+        - BUILD_PHAR=true
     - php: 7.1
       env:
         - PHPUNIT_DEV=true
@@ -38,6 +40,20 @@ script:
 
 after_script:
   - if [[ $CODE_COVERAGE == 'true' ]]; then wget https://scrutinizer-ci.com/ocular.phar; php ocular.phar code-coverage:upload --format=php-clover coverage.clover; fi;
+
+before_deploy:
+  - if [[ $BUILD_PHAR == 'true' ]]; then mkdir -p build; (cd build; curl -LSs https://box-project.github.io/box2/installer.php | php; php -d phar.readonly=0 box.phar build -c ../box.json.dist;);  fi;
+
+deploy:
+  provider: releases
+  api_key:
+    secure: xbFM5bvC8WH7tQSkVsccaZEvjaB2fG3DYtGY15TOORoy0M91JS7Y/3XgM2VoyAX3OHlbejGYPgu7WZ/LZuEUQRr/oS9wzd1XM96y3M09X9fwUqGKeT3zm4G62JZKlFBuoQP0yhwAoiBGFrlc180wC4q/F6rzDyr2AkQiDYXu0hucUqBDmjyR8OwxQgi7fJbwpbVIg1RxmpZ5MAlF+zkoid7qszV3hDMXgufgW6zGnkuSQXuHFwCzfiVuCNt3GQnfUwb0rtWNFgCWErB438QaCyDbzxtVoDaqMH3uV1iaPjTB4jMXZWH0PtR8uvcKD77NX7jkVuzZfXvUIrVa3qICKeVsXu8Qs3fB1GXVF8fRdMWeDr+pQIzP72no06DlIT31dwVWUYwR3sUb4owwZutEdIwPUjxxzUmbLOi6fDE90CMvbmXQ1aiT4X11cusn/9LR7qtojfOvbBiNG9DegWawTPk/aAmBxz+OZMYwkW81E3HCVkSN1ZAQqxlWsq5Z1eJmYoaw2Em4oADmuLDVVEkisofegHbpn08dwUu6XLRTBqeIoA00PwLeuCEv0GSzhGeCLRdfb+4xVd3wYDH/8ERacLFNisSfaB4UtiLwFH/aU4MPm1PyoSmzz9p7mFhmPDYF9ggdcPHGW20qZi4qE3gDmXqqUdp/m1KqQ9Mu051FPh0=
+  file: build/paratest-${TRAVIS_TAG}.phar
+  skip_cleanup: true
+  on:
+    condition: $BUILD_PHAR == 'true'
+    repo: Gasol/paratest
+    tags: true
 
 notifications:
   email: false
